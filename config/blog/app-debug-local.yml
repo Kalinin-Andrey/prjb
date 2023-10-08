@@ -1,0 +1,172 @@
+
+App:
+  NameSpace:    seller-rating
+  Name:         rating
+  Service:      rating
+  Environment:  local
+
+API:
+  Rest:
+    Addr:         ":9000"
+    ReadTimeout:  "5s"
+    WriteTimeout: "5s"
+    IdleTimeout:  "10s"
+  Metrics:
+    Addr:         ":9090"
+    ReadTimeout:  "5s"
+    WriteTimeout: "5s"
+    IdleTimeout:  "10s"
+  Probes:
+    Addr:         ":9091"
+    ReadTimeout:  "5s"
+    WriteTimeout: "5s"
+    IdleTimeout:  "10s"
+
+Integration:
+  FeedbackApi:
+    Httpconfig:
+      Name:                 "feedback-api"
+      MaxIdleConnDuration:  "30s"
+      Timeout:              "60s"
+      Host:                 "https://datav2.feedback-service.svc.k8s.prod-dl"
+    AuthName:               "feedback-collector_data_v2"
+    AuthToken:              "cOoCfadnJ4ZCa6pTP0dguiVts0QpneKr"
+    Limit:                  500
+  SuppliersPortalCoreAPI:
+    Httpconfig:
+      Name:                 "suppliers-portal-core-api"
+      MaxIdleConnDuration:  "30s"
+      Timeout:              "60s"
+      Host:                 "http://suppliers.suppliers-portal-core.svc.k8s.portal-dl"
+    UserID:                  85539001
+  SuppliersPortalCoreABAC:
+    Httpconfig:
+      Name:                 "suppliers-portal-core-abac"
+      MaxIdleConnDuration:  "30s"
+      Timeout:              "30s"
+      Host:                 "http://abac.suppliers-portal-core.svc.k8s.stage-dp"
+  MpNats:
+    Servers:                "nats://marketplace-js-prd-cl-1.dl.wb.ru:4222,nats://marketplace-js-prd-cl-2.dl.wb.ru:4222,nats://marketplace-js-prd-cl-1.dp.wb.ru:4222,nats://marketplace-js-prd-cl-1.3d.wb.ru:4222,nats://marketplace-js-prd-cl-2.3d.wb.ru:4222"
+    Login:                  "seller-rating"
+    Password:               "CFJDHM8ItjEaWgzqRgTDAuOP3mcuAsTF"
+    MaxReconnects:          5
+    ReconnectWaitInSecs:    "2s"
+  MpKafka:
+    Addrs:
+      - "marketplace-remote-wh-events-kafka-stage-1.dll.wb.ru:9092"
+      - "marketplace-remote-wh-events-kafka-stage-2.dll.wb.ru:9092"
+      - "marketplace-remote-wh-events-kafka-stage-3.dll.wb.ru:9092"
+    GroupID:  "seller_rating_cunsumer_group_stage"
+    ClientID: "seller_rating_cunsumer_stage"
+    Topics:
+      NewOrders:
+        - "orders-new"
+      ScannedOrders:
+        - "orders-scans"
+      MPStates:
+        - "orders-statuses"
+      OrdoStates:
+        - "orders-rid-statuses"
+    User: "seller_rating_cunsumer_stage"
+    Password: "Gk7WvNsofPs5YvMoPkyEByVFirmbu731"
+  OrdoKafka:
+    Addrs:
+      - "broker04.do-kafka-dev2.vm.prod-4.cloud.datapro:9093"
+      - "broker05.do-kafka-dev2.vm.prod-4.cloud.datapro:9093"
+      - "broker06.do-kafka-dev2.vm.prod-4.cloud.datapro:9093"
+    GroupID:  "seller-rating_position-changes-ordo_group-dev"
+    ClientID: "seller-rating"
+    Topics:
+      - "position-changes-ordo"
+    User: "seller-rating_position-changes-ordo_consumer-dev"
+    Password: "WkxXTit6LzdaT2lZYWNEMjI4"
+
+Infra:
+  TsDB:
+    Conn:
+      Host:             localhost
+      Port:             5400
+      User:             postgres
+      DbName:           rating
+      SchemaName:       rating
+      MaxOpenConns:     30
+      MaxIdleConns:     30
+      MinConns:         5
+      MaxConnLifetime:  "1h"
+      Timeout:          "60s"
+    Shards:
+      0:
+        MasterHost:     "localhost"
+        MasterPort:     5400
+        SlaveHost:      "localhost"
+        SlavePort:      5400
+        Password:       "postgres"
+  Pg:
+    Conn:
+      Host:             localhost
+      Port:             5401
+      User:             postgres
+      DbName:           result
+      SchemaName:       rating
+      MaxOpenConns:     30
+      MaxIdleConns:     30
+      MinConns:         5
+      MaxConnLifetime:  "1h"
+      Timeout:          "60s"
+    ReplicaSet:
+      MasterHost:     "localhost"
+      MasterPort:     5401
+      SlaveHost:      "localhost"
+      SlavePort:      5401
+      Password:       "result"
+  Redis:
+    Conn:
+      Addrs:
+        - "localhost:6379"
+      Login:    ""
+      Password: ""
+      DBNum:    0
+    Shards:
+      0:
+        MasterAddrs:    "localhost:6379"
+        SlaveAddrs:     "localhost:6379"
+        Password:       ""
+
+Cli:
+  MpOrderCreationCollector:
+    StreamName:         "order"
+    SubjectName:        "order.new"
+    ConsumerName:       "seller-rating-local"
+    ConsumerGroupName:  "seller-rating-local"
+    Duration:           "2s"
+  MpOrderChangeCollector:
+    StreamName:         "purchase"
+    SubjectName:        "purchase.changed-statuses"
+    ConsumerName:       "seller-rating-local"
+    ConsumerGroupName:  "seller-rating-local"
+    Duration:           "2s"
+  AggregateCalculator:
+    AfterMonthDuration: "336h" # сколько ждём после рассчётного месяца до начала рассчётов по нему: две недели
+    ProcessingPeriodInMonths:   6     # за какой период считаем: пол года
+    LimitOfSellersForProcessing:  100  # лимит продавцов для одной итерации расчёта
+    FastCancellationTimeIntervalByClient: "10m"
+    Duration:           "2s"
+    SincDuration:       "10m"
+  Calculator:
+    ProcessingPeriodInMonths:   6     # за какой период считаем: пол года
+    LimitOfSellersForProcessing:  100  # лимит продавцов для одной итерации расчёта
+    TimeoutForCoefficientForGoodsInDelivery:  "24h" # таймаут для расчёта коэффициента для товаров в доставке: 24 часа
+    FastCancellationTimeIntervalByClient: "10m"
+    Duration:           "10s"
+  FeedbackCollector:
+    LimitOfSellersForProcessing:  50  # лимит продавцов для одной итерации расчёта
+    Duration:           "30s"
+    SincDuration:       "10m"
+  DefectCollector:
+    Filler_LimitForProcessing: 10
+  DefectProcessinger:
+    LimitForProcessing: 10
+    Duration:           "2s"
+
+
+
