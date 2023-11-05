@@ -1,8 +1,0 @@
-WARNING 2023-10-08 10:19:14,836 django.request Bad Request: /api/instance/
-WARNING 2023-10-08 10:21:28,559 django.request Bad Request: /api/instance/
-WARNING 2023-10-08 10:22:02,476 django.request Bad Request: /api/instance/
-WARNING 2023-10-08 10:22:09,196 django.request Bad Request: /api/instance/
-WARNING 2023-10-08 10:22:13,510 django.request Bad Request: /api/instance/
-WARNING 2023-10-08 10:22:18,985 django.request Bad Request: /api/instance/
-WARNING 2023-10-08 10:24:09,850 django.request Bad Request: /api/instance/
-WARNING 2023-10-08 10:25:14,337 django.request Bad Request: /api/instance/
