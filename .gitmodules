@@ -4,3 +4,6 @@
 [submodule "user-balance"]
 	path = user-balance
 	url = git@github.com:Kalinin-Andrey/user-balance.git
+[submodule "socbazar"]
+	path = socbazar
+	url = git@github.com:Kalinin-Andrey/ba.git
